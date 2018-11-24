@@ -56,6 +56,10 @@ def update_record(ip):
     records = json.loads(resp)
     cfg['last_update_time'] = str(time.gmtime())
     logging.info("record updated: %s" % records)
+    code = records.get("status").get("code")
+    if code == 1:
+        return True
+    return False
 
 
 def main():
@@ -83,10 +87,14 @@ def main():
                 # new ip found
                 logging.info("new ip found: %s", current_ip)
                 
-                ip_pool.insert(0, current_ip)
-                cfg['ip_pool'] = ','.join([str(x) for x in ip_pool[:ip_count]])
-                update_record(current_ip)
-                save_config()
+                try:
+                    ok = update_record(current_ip)
+                    if ok:
+                        ip_pool.insert(0, current_ip)
+                        cfg['ip_pool'] = ','.join([str(x) for x in ip_pool[:ip_count]])
+                        save_config()
+                except Exception as e:
+                    logging.error("update_record failed, err=%s" %(e))
         else:
             logging.error('get current ip FAILED.')
         time.sleep(interval)
