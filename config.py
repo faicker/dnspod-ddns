@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import os
 import getopt
 import sys
@@ -22,6 +25,7 @@ cfg["domain"] = ''                  # 默认空参数，要求用户必填 #格�
 cfg["interval"] = '5'               # 最小更新间隔
 cfg["record_id"] = '{auto}'         # 记录id，程序自动生成
 cfg["current_ip"] = '{auto}'        # 当前ip，程序自动生成
+cfg["using_local_ip"] = '0'         # 是否使用本地ip
 cfg["email"] = ''                   # 默认空参数，要求用户必填 #格式 'you@email.com'
 
 # ip 池
@@ -31,6 +35,22 @@ cfg["last_update_time"] = '{auto}'  # 上次更新成功时间戳，程序自动
 
 
 def read_config():
+    # 配置文件可指定
+    try:
+        opts, _ = getopt.getopt(sys.argv[1:], "hf:")
+        for opt, arg in opts:
+            if opt == '-f':
+                if not os.path.exists(arg):
+                    print("config file %s not exist" % arg)
+                    print_help()
+                    sys.exit(1)
+                global config_path
+                config_path = arg
+            elif opt == '-h':
+                print_help()
+                sys.exit(1)
+    except getopt.GetoptError:
+        pass
     # 后面读出的数据会覆盖前面的
     read_config_from_file()
     read_config_from_env()
@@ -39,17 +59,18 @@ def read_config():
 
 def print_help():
     max_key_len = max([len(key) for key in cfg.keys()])
-    print("ddns.py [-h|...]")
+    print("ddns.py [-h|-f|...]")
     print("命令行方式调用，可用的参数如下：")
+    fmt = '    --%-' + str(max_key_len) + 's <value>'
     for name in cfg.keys():
-        print('    --%-' + str(max_key_len) + 's <value>' % name)
+        print(fmt % name)
     print("配置优先级: 命令行 > 环境变量 > 配置文件")
     print("当前配置文件目录为：%s" % config_path)
 
 
 def read_config_from_file():
     try:
-        with open(config_path, 'rU') as fp:
+        with open(config_path, 'r') as fp:
             for line in fp:
                 pair = [x.strip() for x in line.split('=')]
                 if pair[0] and pair[1]:
@@ -69,11 +90,8 @@ def read_config_from_env():
 def read_config_from_argv():
     available_args = [x + "=" for x in cfg.keys()]
     try:
-        opts, _ = getopt.getopt(sys.argv[1:], "h", available_args)
+        opts, _ = getopt.getopt(sys.argv[1:], "hf:", available_args)
         for opt, arg in opts:
-            if opt == '-h':
-                print_help()
-                sys.exit()
             if opt.startswith('--'):
                 pair = [opt[2:], arg]
                 if pair[0] and pair[1]:
@@ -85,17 +103,9 @@ def read_config_from_argv():
 
 def save_config():
     try:
-        save_config_to_env()
         save_config_to_file()
     except NotImplementedError as err:
         logging.error("FAILED to save config:" + str(err))
-
-# 不太清楚这个函数能干啥用 = = 写着玩。。。
-
-
-def save_config_to_env():
-    for key in cfg:
-        os.environ[key] = cfg[key]
 
 # 保存配置到文件… 这个函数现在会把配置文件里的注释也删掉……
 
@@ -118,17 +128,17 @@ def check_config():
             cfg['domain'] and
             cfg['sub_domain']):
         logging.fatal('config error: need login info')
-        exit()
+        sys.exit(1)
     try:
         if not(int(cfg["interval"])):
             logging.fatal('interval error')
-            exit()
+            sys.exit(1)
         if not(int(cfg["ip_count"])):
             logging.fatal('ip_count error')            
-            exit()
+            sys.exit(1)
     except:
         logging.fatal('config error')
-        exit()
+        sys.exit(1)
     logging.info('config checked')
 
 

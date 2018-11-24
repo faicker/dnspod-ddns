@@ -22,6 +22,7 @@ SUB_DOMAIN=www
 INTERVAL=5
 EMAIL=you@email.com
 IP_COUNT=1
+USING_LOCAL_IP=0
 ```
 
 * LOGIN_TOKEN : 必填, 在dnspod上申请的api组成的token,参考：https://support.dnspod.cn/Kb/showarticle/tsid/227/
@@ -30,6 +31,7 @@ IP_COUNT=1
 * INTERVAL: 选填, 轮询检查的时间间隔, 单位秒， 默认为5, 建议不要小于5
 * EMAIL: 选填, 你的邮箱
 * IP_COUNT: 选填, 你服务器的出口IP数量，一般为1，填大了一般也没事（玩 OpenWrt 的可能会有多个IP）
+* USING_LOCAL_IP: 选填，默认是0
 
 运行 `python ddns.py`
 

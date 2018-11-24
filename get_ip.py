@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import re
 import logging
 import socket
@@ -13,7 +16,9 @@ regex_ip = re.compile(
     + r")\D*")
 
 # 增强鲁棒性，用多种方式获取 IP
-def get_ip():
+def get_ip(is_local=0):
+    if is_local:
+        return get_my_local_ip()
     return (get_ip_by_ipip()
         or  get_ip_by_httpbin()
         or  get_ip_by_httpbin_direct_1()
@@ -60,10 +65,19 @@ def get_ip_by_httpbin_direct_2():
         logging.warning("get_ip_by_httpbin_direct_2 FAILED, error: %s", str(e))
         return None
 
-    
+def get_my_local_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('223.5.5.5', 80))
+        ip = s.getsockname()[0]
+    finally:
+        s.close()
+    return ip
+
 # 测试
 if __name__ == '__main__':
     print(get_ip()                     )
     print(get_ip_by_ipip()             )
     print(get_ip_by_httpbin()          )
     print(get_ip_by_httpbin_direct_1() )
+    print(get_my_local_ip()            )
