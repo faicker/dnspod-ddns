@@ -48,7 +48,6 @@ def update_record(ip):
         'record_id': cfg['record_id'],
         'record_line': '默认',
         'record_type': 'A',
-        'ttl': 60,
         'value': ip,
     })
     req = request.Request(url=url, data=params.encode('utf-8'), method='POST', headers=header())
@@ -57,7 +56,7 @@ def update_record(ip):
     cfg['last_update_time'] = str(time.gmtime())
     logging.info("record updated: %s" % records)
     code = records.get("status").get("code")
-    if code == 1:
+    if int(code) == 1:
         return True
     return False
 
